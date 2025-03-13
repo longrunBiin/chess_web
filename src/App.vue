@@ -195,8 +195,14 @@ export default {
                             const { result } = moveResponse.data;
                             
                             // 기물 이동 후 보드 업데이트
-                            const parsedBoard = parseBoard(result.board);
-                            board.value = parsedBoard;
+                            const fromPos = selectedPosition.value;
+                            const toPos = { row, col };
+                            
+                            // 기존 위치의 기물을 새로운 위치로 이동
+                            const movingPiece = board.value[fromPos.row][fromPos.col];
+                            board.value[fromPos.row][fromPos.col] = '';
+                            board.value[toPos.row][toPos.col] = movingPiece;
+                            
                             selectedPosition.value = null;
 
                             // 점수 업데이트
@@ -205,6 +211,10 @@ export default {
                             } else {
                                 blackScore.value += result.movePiece.score;
                             }
+
+                            // 턴 변경
+                            currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white';
+                            showNotification(moveResponse.data.message, 'success');
 
                             // 킹을 잡았을 경우 게임 종료
                             if (moveResponse.data.message.includes('킹을 잡았습니다')) {
@@ -231,21 +241,16 @@ export default {
                                         blackScore.value = gameResultData.whiteScore;
                                     }
                                 }
-                                showNotification(moveResponse.data.message, 'success');
-                            } else {
-                                // 턴 변경
-                                currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white';
-                                showNotification(moveResponse.data.message, 'success');
                             }
                         } else {
                             showNotification(moveResponse.data.message);
                         }
                     } catch (error) {
-                        showNotification(error.response?.data?.message || '이동할 수 없는 위치입니다.')
-                        console.error('Error:', error)
+                        showNotification(error.response?.data?.message || '서버 오류가 발생했습니다.');
+                        console.error('Error:', error);
                     }
                 } else {
-                    showNotification('잘못된 이동입니다.')
+                    showNotification('해당 위치로 이동할 수 없습니다.')
                 }
             } else if (clickedPiece) {
                 if ((currentTurn.value === 'white' && isWhitePiece) ||
