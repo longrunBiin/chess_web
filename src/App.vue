@@ -88,11 +88,10 @@ export default {
 
         const parseBoard = (boardStr) => {
             return boardStr.split('\n')
-                .filter(row => row.length > 0)
+                .filter(row => row.length === 8)  // 8개의 문자를 가진 행만 선택
                 .map(row => {
                     return row.split('').map(char => {
-                        if (char === '.') return '';
-                        return char;
+                        return char === '.' ? '' : char;
                     });
                 });
         }
@@ -120,7 +119,8 @@ export default {
                 })
                 
                 if (response.data.isSuccess) {
-                    board.value = parseBoard(response.data.result.board)
+                    const parsedBoard = parseBoard(response.data.result.board)
+                    board.value = parsedBoard
                     currentTurn.value = 'white'
                     gameStatus.value = 'playing'
                     showNotification(response.data.message, 'success')
@@ -129,6 +129,7 @@ export default {
                 }
             } catch (error) {
                 showNotification('게임 초기화 중 오류가 발생했습니다.')
+                console.error('Error:', error)
             }
         }
 
@@ -176,12 +177,12 @@ export default {
 
                 if (isValidMove(row, col)) {
                     try {
+                        const startPos = getCoordinateString(selectedPosition.value);
+                        const endPos = getCoordinateString({ row, col });
+                        
                         const moveResponse = await axios.post(`${API_URL}/api/move`, {
-                            from: {
-                                row: selectedPosition.value.row,
-                                col: selectedPosition.value.col
-                            },
-                            to: { row, col }
+                            startPos,
+                            endPos
                         }, {
                             headers: {
                                 'Cache-Control': 'no-cache',
@@ -190,24 +191,57 @@ export default {
                             }
                         })
 
-                        board.value = moveResponse.data.board
-                        currentTurn.value = moveResponse.data.currentTurn
-                        selectedPosition.value = null
+                        if (moveResponse.data.isSuccess) {
+                            const { result } = moveResponse.data;
+                            
+                            // 기물 이동 후 보드 업데이트
+                            await initializeBoard();
+                            selectedPosition.value = null;
 
-                        if (moveResponse.data.gameStatus === 'finished') {
-                            const resultResponse = await axios.get(`${API_URL}/api/result`)
-                            gameResult.value = {
-                                winner: resultResponse.data.winner,
-                                winnerPieces: resultResponse.data.winnerPieces,
-                                loserPieces: resultResponse.data.loserPieces
+                            // 점수 업데이트
+                            if (result.movePiece.white) {
+                                whiteScore.value += result.movePiece.score;
+                            } else {
+                                blackScore.value += result.movePiece.score;
                             }
-                            gameStatus.value = 'finished'
-                            showNotification(`${resultResponse.data.winner} 팀 승리!`, 'success')
+
+                            // 킹을 잡았을 경우 게임 종료
+                            if (moveResponse.data.message.includes('킹을 잡았습니다')) {
+                                gameStatus.value = 'finished';
+                                
+                                // 결과 API 호출
+                                const color = result.movePiece.white ? 'white' : 'black';
+                                const resultResponse = await axios.get(`${API_URL}/api/result?color=${color}`);
+                                
+                                if (resultResponse.data.isSuccess) {
+                                    const { result: gameResultData } = resultResponse.data;
+                                    gameResult.value = {
+                                        winner: gameResultData.winnerColor === 'WHITE' ? '흰색' : '검은색',
+                                        winnerPieces: gameResultData.whiteScore,
+                                        loserPieces: gameResultData.loserScore
+                                    };
+                                    
+                                    // 점수 최종 업데이트
+                                    if (gameResultData.winnerColor === 'WHITE') {
+                                        whiteScore.value = gameResultData.whiteScore;
+                                        blackScore.value = gameResultData.loserScore;
+                                    } else {
+                                        whiteScore.value = gameResultData.loserScore;
+                                        blackScore.value = gameResultData.whiteScore;
+                                    }
+                                }
+                                showNotification(moveResponse.data.message, 'success');
+                            } else {
+                                // 턴 변경
+                                currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white';
+                                showNotification(moveResponse.data.message, 'success');
+                            }
                         } else {
-                            showNotification('이동 성공!', 'success')
+                            showNotification(moveResponse.data.message);
                         }
                     } catch (error) {
                         showNotification(error.response?.data?.message || '이동할 수 없는 위치입니다.')
+                        console.error('Error:', error)
                     }
                 } else {
                     showNotification('잘못된 이동입니다.')
