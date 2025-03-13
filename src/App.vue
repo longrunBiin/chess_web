@@ -3,25 +3,32 @@
         <h1>체스 게임</h1>
         <div v-if="gameStatus === 'playing'" class="game-info">
             <div class="current-turn">현재 턴: {{ currentTurn }}</div>
-            <div class="score">
-                <div class="white-score">흰색 점수: {{ whiteScore }}</div>
-                <div class="black-score">검은색 점수: {{ blackScore }}</div>
-            </div>
         </div>
         <div v-if="gameStatus !== 'idle'" class="board-container">
-            <div class="board">
-                <div v-for="(row, rowIndex) in board" :key="rowIndex" class="row">
-                    <div v-for="(piece, colIndex) in row" 
-                         :key="colIndex" 
-                         class="cell"
-                         :class="{
-                             'white': (rowIndex + colIndex) % 2 === 0,
-                             'black': (rowIndex + colIndex) % 2 === 1,
-                             'selected': isSelected(rowIndex, colIndex),
-                             'valid-move': isValidMove(rowIndex, colIndex)
-                         }"
-                         @click="handleCellClick(rowIndex, colIndex)">
-                        <div class="piece" v-if="piece">{{ piece }}</div>
+            <div class="rank-labels">
+                <div v-for="i in 8" :key="i" class="rank-label">
+                    {{ 9 - i }}
+                </div>
+            </div>
+            <div class="board-wrapper">
+                <div class="board">
+                    <div v-for="(row, rowIndex) in board" :key="rowIndex" class="row">
+                        <div v-for="(piece, colIndex) in row" 
+                             :key="colIndex" 
+                             class="cell"
+                             :class="{
+                                 'white': (rowIndex + colIndex) % 2 === 0,
+                                 'black': (rowIndex + colIndex) % 2 === 1,
+                                 'selected': isSelected(rowIndex, colIndex)
+                             }"
+                             @click="handleCellClick(rowIndex, colIndex)">
+                            <div class="piece" v-if="piece">{{ piece }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="file-labels">
+                    <div v-for="i in 8" :key="i" class="file-label">
+                        {{ String.fromCharCode(96 + i) }}
                     </div>
                 </div>
             </div>
@@ -340,6 +347,13 @@ h1 {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    align-items: center;
+}
+
+.board-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .board {
@@ -370,14 +384,6 @@ h1 {
 
 .selected {
     background-color: #baca44;
-}
-
-.valid-move::after {
-    content: '';
-    width: 20px;
-    height: 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
 }
 
 .piece {
@@ -490,6 +496,38 @@ button:disabled {
 
 h3 {
     margin: 0 0 10px 0;
+    color: #333;
+}
+
+.rank-labels {
+    display: flex;
+    flex-direction: column;
+    margin-right: 10px;
+}
+
+.rank-label {
+    height: 60px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333;
+}
+
+.file-labels {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.file-label {
+    width: 60px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
     color: #333;
 }
 
