@@ -53,7 +53,7 @@
                     <div v-for="(piece, index) in gameResult.winnerPiecesList" 
                          :key="index" 
                          class="piece-item">
-                        <span class="piece-name">{{ piece.name }}</span>
+                        <span class="piece-name">{{ getPieceName(piece.name) }}</span>
                         <span class="piece-score">({{ piece.score }}점)</span>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                     <div v-for="(piece, index) in gameResult.loserPiecesList" 
                          :key="index" 
                          class="piece-item">
-                        <span class="piece-name">{{ piece.name }}</span>
+                        <span class="piece-name">{{ getPieceName(piece.name) }}</span>
                         <span class="piece-score">({{ piece.score }}점)</span>
                     </div>
                 </div>
@@ -219,13 +219,6 @@ export default {
                             
                             selectedPosition.value = null;
 
-                            // 점수 업데이트
-                            if (result.movePiece.white) {
-                                whiteScore.value += result.movePiece.score;
-                            } else {
-                                blackScore.value += result.movePiece.score;
-                            }
-
                             // 턴 변경
                             currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white';
                             showNotification(moveResponse.data.message, 'success');
@@ -244,14 +237,8 @@ export default {
                                         winner: gameResultData.winnerColor === 'WHITE' ? '흰색' : '검은색',
                                         winnerPieces: gameResultData.whiteScore,
                                         loserPieces: gameResultData.loserScore,
-                                        winnerPiecesList: gameResultData.winnerPieces.map(piece => ({
-                                            name: getPieceName(piece.name),
-                                            score: piece.score
-                                        })),
-                                        loserPiecesList: gameResultData.loserPieces.map(piece => ({
-                                            name: getPieceName(piece.name),
-                                            score: piece.score
-                                        }))
+                                        winnerPiecesList: gameResultData.winnerPieces,
+                                        loserPiecesList: gameResultData.loserPieces
                                     };
                                     
                                     // 점수 최종 업데이트
