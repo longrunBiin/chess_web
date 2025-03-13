@@ -148,13 +148,6 @@ export default {
             if (!selectedPosition.value) return false
             const selectedPiece = board.value[selectedPosition.value.row][selectedPosition.value.col]
             if (!selectedPiece) return false
-
-            const isWhitePiece = selectedPiece === selectedPiece.toUpperCase()
-            if ((currentTurn.value === 'white' && !isWhitePiece) ||
-                (currentTurn.value === 'black' && isWhitePiece)) {
-                return false
-            }
-
             return true
         }
 
@@ -167,7 +160,6 @@ export default {
             if (gameStatus.value !== 'playing') return
 
             const clickedPiece = board.value[row][col]
-            const isWhitePiece = clickedPiece && clickedPiece === clickedPiece.toUpperCase()
 
             if (selectedPosition.value) {
                 if (isSelected(row, col)) {
@@ -253,12 +245,7 @@ export default {
                     showNotification('해당 위치로 이동할 수 없습니다.')
                 }
             } else if (clickedPiece) {
-                if ((currentTurn.value === 'white' && isWhitePiece) ||
-                    (currentTurn.value === 'black' && !isWhitePiece)) {
-                    selectedPosition.value = { row, col }
-                } else {
-                    showNotification('현재 턴이 아닙니다.')
-                }
+                selectedPosition.value = { row, col }
             }
         }
 
