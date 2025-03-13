@@ -1,0 +1,246 @@
+/* 알림 메시지 스타일 */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideDown 0.3s ease-in-out, fadeOut 0.3s ease-in-out 2.7s forwards;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.notification.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.notification.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+#app {
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.start-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem;
+}
+
+.start-button {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.start-button:hover {
+    background-color: #45a049;
+}
+
+.chess-board-container {
+    display: inline-block;
+    padding: 10px;
+    background-color: #B58863;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.board-with-coordinates {
+    display: flex;
+    align-items: center;
+}
+
+.coordinate-row {
+    display: flex;
+    justify-content: center;
+    height: 25px;
+    margin-top: 5px;
+}
+
+.coordinate-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 25px;
+}
+
+.coordinate-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F0D9B5;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.coordinate-row .coordinate-label {
+    width: 60px;
+    height: 25px;
+}
+
+.coordinate-column .coordinate-label {
+    width: 25px;
+    height: 60px;
+    padding-right: 5px;
+}
+
+.coordinate-cell {
+    width: 25px;
+    height: 25px;
+}
+
+.chess-board {
+    display: inline-block;
+    border: 2px solid #333;
+    background-color: #fff;
+    margin: 0 5px;
+}
+
+.row {
+    display: flex;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background-color: #F0D9B5;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.black-cell {
+    background-color: #B58863;
+}
+
+.cell:hover {
+    opacity: 0.8;
+}
+
+.selected {
+    background-color: #aed581 !important;
+    box-shadow: inset 0 0 0 2px #33691e;
+}
+
+.game-result {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.game-result h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.game-result h3 {
+    color: #e74c3c;
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.result-details {
+    display: flex;
+    justify-content: space-around;
+    margin: 2rem 0;
+}
+
+.team-result {
+    flex: 1;
+    max-width: 300px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    margin: 0 10px;
+}
+
+.team-result h4 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.pieces-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.piece {
+    background-color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.restart-button {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 2rem;
+}
+
+.restart-button:hover {
+    background-color: #2980b9;
+}
