@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <h1>체스 게임</h1>
-        <div class="game-info">
+        <div v-if="gameStatus === 'playing'" class="game-info">
             <div class="current-turn">현재 턴: {{ currentTurn }}</div>
             <div class="score">
                 <div class="white-score">흰색 점수: {{ whiteScore }}</div>
@@ -27,9 +27,11 @@
             </div>
         </div>
         <div class="controls">
-            <button @click="startGame" :disabled="gameStatus === 'playing'">게임 시작</button>
+            <button @click="startGame" :disabled="gameStatus === 'playing'">
+                {{ gameStatus === 'playing' ? '게임 진행중' : '게임 시작' }}
+            </button>
         </div>
-        <div class="coordinates">
+        <div v-if="gameStatus === 'playing'" class="coordinates">
             <div class="coordinate-info" v-if="selectedPosition">
                 선택된 위치: {{ getCoordinateString(selectedPosition) }}
             </div>
@@ -98,7 +100,7 @@ export default {
 
         const initializeBoard = async () => {
             try {
-                const response = await axios.get(`${API_URL}/api/chess/board`, {
+                const response = await axios.get(`${API_URL}/api/start`, {
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache',
@@ -157,7 +159,7 @@ export default {
 
                 if (isValidMove(row, col)) {
                     try {
-                        const response = await axios.post(`${API_URL}/api/chess/move`, {
+                        const moveResponse = await axios.post(`${API_URL}/api/move`, {
                             from: {
                                 row: selectedPosition.value.row,
                                 col: selectedPosition.value.col
@@ -171,18 +173,19 @@ export default {
                             }
                         })
 
-                        board.value = response.data.board
-                        currentTurn.value = response.data.currentTurn
+                        board.value = moveResponse.data.board
+                        currentTurn.value = moveResponse.data.currentTurn
                         selectedPosition.value = null
 
-                        if (response.data.gameStatus === 'finished') {
+                        if (moveResponse.data.gameStatus === 'finished') {
+                            const resultResponse = await axios.get(`${API_URL}/api/result`)
                             gameResult.value = {
-                                winner: response.data.winner,
-                                winnerPieces: response.data.winnerPieces,
-                                loserPieces: response.data.loserPieces
+                                winner: resultResponse.data.winner,
+                                winnerPieces: resultResponse.data.winnerPieces,
+                                loserPieces: resultResponse.data.loserPieces
                             }
                             gameStatus.value = 'finished'
-                            showNotification(`${response.data.winner} 팀 승리!`, 'success')
+                            showNotification(`${resultResponse.data.winner} 팀 승리!`, 'success')
                         } else {
                             showNotification('이동 성공!', 'success')
                         }
