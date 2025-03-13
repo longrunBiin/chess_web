@@ -223,4 +223,168 @@ export default {
         }
     }
 }
-</script> 
+</script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.game-info {
+    margin-bottom: 20px;
+}
+
+.current-turn {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.score {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.board-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.board {
+    border: 2px solid #333;
+    display: inline-block;
+}
+
+.row {
+    display: flex;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.white {
+    background-color: #fff;
+}
+
+.black {
+    background-color: #769656;
+}
+
+.selected {
+    background-color: #baca44;
+}
+
+.valid-move::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+}
+
+.piece {
+    font-size: 2em;
+    user-select: none;
+}
+
+.controls {
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1.1em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.coordinates {
+    margin-top: 20px;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    border-radius: 5px;
+    font-size: 1.1em;
+    z-index: 1000;
+    animation: slideDown 0.3s ease-out;
+}
+
+.notification.error {
+    background-color: #ff4444;
+    color: white;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.game-result {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1000;
+}
+
+.final-score {
+    margin: 20px 0;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+    }
+    to {
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+</style> 
