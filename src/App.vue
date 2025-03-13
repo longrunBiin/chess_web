@@ -195,7 +195,8 @@ export default {
                             const { result } = moveResponse.data;
                             
                             // 기물 이동 후 보드 업데이트
-                            await initializeBoard();
+                            const parsedBoard = parseBoard(result.board);
+                            board.value = parsedBoard;
                             selectedPosition.value = null;
 
                             // 점수 업데이트
