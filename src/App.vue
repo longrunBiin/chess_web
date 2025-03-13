@@ -8,7 +8,7 @@
                 <div class="black-score">검은색 점수: {{ blackScore }}</div>
             </div>
         </div>
-        <div class="board-container">
+        <div v-if="gameStatus !== 'idle'" class="board-container">
             <div class="board">
                 <div v-for="(row, rowIndex) in board" :key="rowIndex" class="row">
                     <div v-for="(piece, colIndex) in row" 
@@ -86,6 +86,17 @@ export default {
             }, 3000)
         }
 
+        const parseBoard = (boardStr) => {
+            return boardStr.split('\n')
+                .filter(row => row.length > 0)
+                .map(row => {
+                    return row.split('').map(char => {
+                        if (char === '.') return '';
+                        return char;
+                    });
+                });
+        }
+
         const clearGameState = () => {
             board.value = []
             currentTurn.value = 'white'
@@ -107,9 +118,15 @@ export default {
                         'Expires': '0'
                     }
                 })
-                board.value = response.data.board
-                currentTurn.value = response.data.currentTurn
-                gameStatus.value = 'playing'
+                
+                if (response.data.isSuccess) {
+                    board.value = parseBoard(response.data.result.board)
+                    currentTurn.value = 'white'
+                    gameStatus.value = 'playing'
+                    showNotification(response.data.message, 'success')
+                } else {
+                    showNotification(response.data.message)
+                }
             } catch (error) {
                 showNotification('게임 초기화 중 오류가 발생했습니다.')
             }
