@@ -7,61 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>체스 게임</title>
-    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <div id="app">
-        <div class="container">
-            <h1>체스 게임</h1>
-            <div class="game-info">
-                <div class="current-turn">현재 턴: {{ currentTurn }}</div>
-                <div class="score">
-                    <div class="white-score">흰색 점수: {{ whiteScore }}</div>
-                    <div class="black-score">검은색 점수: {{ blackScore }}</div>
-                </div>
-            </div>
-            <div class="board-container">
-                <div class="board">
-                    <div v-for="(row, rowIndex) in board" :key="rowIndex" class="row">
-                        <div v-for="(piece, colIndex) in row" 
-                             :key="colIndex" 
-                             class="cell"
-                             :class="{
-                                 'white': (rowIndex + colIndex) % 2 === 0,
-                                 'black': (rowIndex + colIndex) % 2 === 1,
-                                 'selected': isSelected(rowIndex, colIndex),
-                                 'valid-move': isValidMove(rowIndex, colIndex)
-                             }"
-                             @click="handleCellClick(rowIndex, colIndex)">
-                            <div class="piece" v-if="piece">{{ piece }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="controls">
-                <button @click="startGame" :disabled="gameStatus === 'playing'">게임 시작</button>
-            </div>
-            <div class="coordinates">
-                <div class="coordinate-info" v-if="selectedPosition">
-                    선택된 위치: {{ getCoordinateString(selectedPosition) }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div v-if="notification.show" 
-         class="notification" 
-         :class="notification.type">
-        {{ notification.message }}
-    </div>
-    <div v-if="gameResult" class="game-result">
-        <h2>게임 종료!</h2>
-        <p>{{ gameResult.winner }} 팀 승리!</p>
-        <div class="final-score">
-            <p>승리 팀 점수: {{ gameResult.winnerPieces }}</p>
-            <p>패배 팀 점수: {{ gameResult.loserPieces }}</p>
-        </div>
-        <button @click="startGame">다시 시작</button>
-    </div>
-    <script type="module" src="/js/app.js"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html> 
