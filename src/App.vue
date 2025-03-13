@@ -46,8 +46,30 @@
         <h2>게임 종료!</h2>
         <p>{{ gameResult.winner }} 팀 승리!</p>
         <div class="final-score">
-            <p>승리 팀 점수: {{ gameResult.winnerPieces }}</p>
-            <p>패배 팀 점수: {{ gameResult.loserPieces }}</p>
+            <div class="winner-info">
+                <h3>승리 팀 ({{ gameResult.winner }})</h3>
+                <p>총 점수: {{ gameResult.winnerPieces }}</p>
+                <div class="pieces-list">
+                    <div v-for="(piece, index) in gameResult.winnerPiecesList" 
+                         :key="index" 
+                         class="piece-item">
+                        <span class="piece-name">{{ piece.name }}</span>
+                        <span class="piece-score">({{ piece.score }}점)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="loser-info">
+                <h3>패배 팀 ({{ gameResult.winner === '흰색' ? '검은색' : '흰색' }})</h3>
+                <p>총 점수: {{ gameResult.loserPieces }}</p>
+                <div class="pieces-list">
+                    <div v-for="(piece, index) in gameResult.loserPiecesList" 
+                         :key="index" 
+                         class="piece-item">
+                        <span class="piece-name">{{ piece.name }}</span>
+                        <span class="piece-score">({{ piece.score }}점)</span>
+                    </div>
+                </div>
+            </div>
         </div>
         <button @click="startGame">다시 시작</button>
     </div>
@@ -221,7 +243,15 @@ export default {
                                     gameResult.value = {
                                         winner: gameResultData.winnerColor === 'WHITE' ? '흰색' : '검은색',
                                         winnerPieces: gameResultData.whiteScore,
-                                        loserPieces: gameResultData.loserScore
+                                        loserPieces: gameResultData.loserScore,
+                                        winnerPiecesList: gameResultData.winnerPieces.map(piece => ({
+                                            name: getPieceName(piece.name),
+                                            score: piece.score
+                                        })),
+                                        loserPiecesList: gameResultData.loserPieces.map(piece => ({
+                                            name: getPieceName(piece.name),
+                                            score: piece.score
+                                        }))
                                     };
                                     
                                     // 점수 최종 업데이트
@@ -249,6 +279,18 @@ export default {
             }
         }
 
+        const getPieceName = (name) => {
+            const pieceNames = {
+                'PAWN': '폰',
+                'ROOK': '룩',
+                'KNIGHT': '나이트',
+                'BISHOP': '비숍',
+                'QUEEN': '퀸',
+                'KING': '킹'
+            };
+            return pieceNames[name] || name;
+        }
+
         onMounted(() => {
             clearGameState()
         })
@@ -266,7 +308,8 @@ export default {
             isSelected,
             isValidMove,
             getCoordinateString,
-            handleCellClick
+            handleCellClick,
+            getPieceName
         }
     }
 }
@@ -411,10 +454,56 @@ button:disabled {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     text-align: center;
     z-index: 1000;
+    max-width: 600px;
+    width: 90%;
 }
 
 .final-score {
     margin: 20px 0;
+    display: flex;
+    gap: 30px;
+    justify-content: space-between;
+}
+
+.winner-info, .loser-info {
+    flex: 1;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.winner-info {
+    background-color: #e8f5e9;
+}
+
+.loser-info {
+    background-color: #ffebee;
+}
+
+.pieces-list {
+    margin-top: 10px;
+    text-align: left;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.piece-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.piece-name {
+    font-weight: bold;
+}
+
+.piece-score {
+    color: #666;
+}
+
+h3 {
+    margin: 0 0 10px 0;
+    color: #333;
 }
 
 @keyframes slideDown {
