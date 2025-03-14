@@ -19,7 +19,8 @@
                              :class="{
                                  'white': (rowIndex + colIndex) % 2 === 0,
                                  'black': (rowIndex + colIndex) % 2 === 1,
-                                 'selected': isSelected(rowIndex, colIndex)
+                                 'selected': isSelected(rowIndex, colIndex),
+                                 'valid-move': isValidMove(rowIndex, colIndex)
                              }"
                              @click="handleCellClick(rowIndex, colIndex)">
                             <div class="piece" v-if="piece">{{ piece }}</div>
@@ -34,9 +35,29 @@
             </div>
         </div>
         <div class="controls">
-            <button @click="startGame" :disabled="gameStatus === 'playing'">
-                {{ gameStatus === 'playing' ? '게임 진행중' : '게임 시작' }}
-            </button>
+            <div v-if="gameStatus === 'idle'" class="game-modes">
+                <h2>게임 모드 선택</h2>
+                <div class="mode-buttons">
+                    <button @click="startSoloGame">혼자하기</button>
+                    <button @click="startAIGame">AI와 하기</button>
+                </div>
+            </div>
+            <div v-if="gameStatus === 'idle' && showAIOptions" class="ai-options">
+                <h3>AI 난이도 선택</h3>
+                <div class="difficulty-buttons">
+                    <button @click="selectDifficulty('easy')">쉬움</button>
+                    <button @click="selectDifficulty('normal')">보통</button>
+                    <button @click="selectDifficulty('hard')">어려움</button>
+                </div>
+            </div>
+            <div v-if="gameStatus === 'idle' && showTeamSelection" class="team-selection">
+                <h3>팀 선택</h3>
+                <div class="team-buttons">
+                    <button @click="selectTeam('white')">흰색 팀</button>
+                    <button @click="selectTeam('black')">검은색 팀</button>
+                </div>
+            </div>
+            <button v-if="gameStatus === 'finished'" @click="startGame">다시 시작</button>
         </div>
         <div v-if="gameStatus === 'playing'" class="coordinates">
             <div class="coordinate-info" v-if="selectedPosition">
@@ -101,6 +122,11 @@ export default {
             message: '',
             type: 'error'
         })
+        const showAIOptions = ref(false)
+        const showTeamSelection = ref(false)
+        const selectedDifficulty = ref(null)
+        const selectedTeam = ref(null)
+        const isAIMode = ref(false)
 
         const API_URL = import.meta.env.VITE_API_URL
 
@@ -137,9 +163,32 @@ export default {
             sessionStorage.clear()
         }
 
-        const initializeBoard = async () => {
+        const startSoloGame = () => {
+            isAIMode.value = false
+            startGame('none')
+        }
+
+        const startAIGame = () => {
+            isAIMode.value = true
+            showAIOptions.value = true
+        }
+
+        const selectDifficulty = (difficulty) => {
+            selectedDifficulty.value = difficulty
+            showAIOptions.value = false
+            showTeamSelection.value = true
+        }
+
+        const selectTeam = (team) => {
+            selectedTeam.value = team
+            showTeamSelection.value = false
+            startGame(selectedDifficulty.value)
+        }
+
+        const startGame = async (difficulty) => {
+            clearGameState()
             try {
-                const response = await axios.get(`${API_URL}/api/start`, {
+                const response = await axios.get(`${API_URL}/api/start/${difficulty}`, {
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache',
@@ -153,6 +202,11 @@ export default {
                     currentTurn.value = 'white'
                     gameStatus.value = 'playing'
                     showNotification(response.data.message, 'success')
+
+                    // AI 모드이고 검은색 팀을 선택한 경우, AI의 첫 수를 요청
+                    if (isAIMode.value && selectedTeam.value === 'black') {
+                        await requestAIMove()
+                    }
                 } else {
                     showNotification(response.data.message)
                 }
@@ -162,9 +216,22 @@ export default {
             }
         }
 
-        const startGame = async () => {
-            clearGameState()
-            await initializeBoard()
+        const requestAIMove = async () => {
+            try {
+                const response = await axios.post(`${API_URL}/api/move/ai`, {
+                    difficulty: selectedDifficulty.value
+                })
+                
+                if (response.data.isSuccess) {
+                    const { result } = response.data
+                    updateBoard(result.board)
+                    currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white'
+                    showNotification('AI가 수를 두었습니다.', 'success')
+                }
+            } catch (error) {
+                showNotification('AI 수 요청 중 오류가 발생했습니다.')
+                console.error('Error:', error)
+            }
         }
 
         const isSelected = (row, col) => {
@@ -188,6 +255,13 @@ export default {
         const handleCellClick = async (row, col) => {
             if (gameStatus.value !== 'playing') return
 
+            // AI 모드일 때 자신의 턴이 아닌 경우 클릭 무시
+            if (isAIMode.value && 
+                ((selectedTeam.value === 'white' && currentTurn.value === 'black') ||
+                 (selectedTeam.value === 'black' && currentTurn.value === 'white'))) {
+                return
+            }
+
             const clickedPiece = board.value[row][col]
 
             if (selectedPosition.value) {
@@ -198,72 +272,58 @@ export default {
 
                 if (isValidMove(row, col)) {
                     try {
-                        const startPos = getCoordinateString(selectedPosition.value);
-                        const endPos = getCoordinateString({ row, col });
+                        const startPos = getCoordinateString(selectedPosition.value)
+                        const endPos = getCoordinateString({ row, col })
                         
                         const moveResponse = await axios.post(`${API_URL}/api/move`, {
                             startPos,
                             endPos
-                        }, {
-                            headers: {
-                                'Cache-Control': 'no-cache',
-                                'Pragma': 'no-cache',
-                                'Expires': '0'
-                            }
                         })
 
                         if (moveResponse.data.isSuccess) {
-                            const { result } = moveResponse.data;
+                            const { result } = moveResponse.data
                             
-                            // 기물 이동 후 보드 업데이트
-                            const fromPos = selectedPosition.value;
-                            const toPos = { row, col };
+                            const fromPos = selectedPosition.value
+                            const toPos = { row, col }
                             
-                            // 기존 위치의 기물을 새로운 위치로 이동
-                            const movingPiece = board.value[fromPos.row][fromPos.col];
-                            board.value[fromPos.row][fromPos.col] = '';
-                            board.value[toPos.row][toPos.col] = movingPiece;
+                            const movingPiece = board.value[fromPos.row][fromPos.col]
+                            board.value[fromPos.row][fromPos.col] = ''
+                            board.value[toPos.row][toPos.col] = movingPiece
                             
-                            selectedPosition.value = null;
+                            selectedPosition.value = null
+                            currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white'
+                            showNotification(moveResponse.data.message, 'success')
 
-                            // 턴 변경
-                            currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white';
-                            showNotification(moveResponse.data.message, 'success');
+                            // AI 모드일 때 플레이어의 수가 끝나면 AI의 수를 요청
+                            if (isAIMode.value && 
+                                ((selectedTeam.value === 'white' && currentTurn.value === 'black') ||
+                                 (selectedTeam.value === 'black' && currentTurn.value === 'white'))) {
+                                await requestAIMove()
+                            }
 
-                            // 킹을 잡았을 경우 게임 종료
                             if (moveResponse.data.message.includes('킹을 잡았습니다')) {
-                                gameStatus.value = 'finished';
+                                gameStatus.value = 'finished'
                                 
-                                // 결과 API 호출
-                                const color = result.movePiece.white ? 'white' : 'black';
-                                const resultResponse = await axios.get(`${API_URL}/api/result?color=${color}`);
+                                const color = result.movePiece.white ? 'white' : 'black'
+                                const resultResponse = await axios.get(`${API_URL}/api/result?color=${color}`)
                                 
                                 if (resultResponse.data.isSuccess) {
-                                    const { result: gameResultData } = resultResponse.data;
+                                    const { result: gameResultData } = resultResponse.data
                                     gameResult.value = {
                                         winner: gameResultData.winnerColor === 'WHITE' ? '흰색' : '검은색',
                                         winnerPieces: gameResultData.whiteScore,
                                         loserPieces: gameResultData.loserScore,
                                         winnerPiecesList: gameResultData.winnerPieces,
                                         loserPiecesList: gameResultData.loserPieces
-                                    };
-                                    
-                                    // 점수 최종 업데이트
-                                    if (gameResultData.winnerColor === 'WHITE') {
-                                        whiteScore.value = gameResultData.whiteScore;
-                                        blackScore.value = gameResultData.loserScore;
-                                    } else {
-                                        whiteScore.value = gameResultData.loserScore;
-                                        blackScore.value = gameResultData.whiteScore;
                                     }
                                 }
                             }
                         } else {
-                            showNotification(moveResponse.data.message);
+                            showNotification(moveResponse.data.message)
                         }
                     } catch (error) {
-                        showNotification(error.response?.data?.message || '서버 오류가 발생했습니다.');
-                        console.error('Error:', error);
+                        showNotification(error.response?.data?.message || '서버 오류가 발생했습니다.')
+                        console.error('Error:', error)
                     }
                 } else {
                     showNotification('해당 위치로 이동할 수 없습니다.')
@@ -298,6 +358,15 @@ export default {
             blackScore,
             gameResult,
             notification,
+            showAIOptions,
+            showTeamSelection,
+            selectedDifficulty,
+            selectedTeam,
+            isAIMode,
+            startSoloGame,
+            startAIGame,
+            selectDifficulty,
+            selectTeam,
             startGame,
             isSelected,
             isValidMove,
@@ -384,6 +453,14 @@ h1 {
 
 .selected {
     background-color: #baca44;
+}
+
+.valid-move::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
 }
 
 .piece {
@@ -529,6 +606,26 @@ h3 {
     justify-content: center;
     font-weight: bold;
     color: #333;
+}
+
+.game-modes {
+    margin-bottom: 20px;
+}
+
+.mode-buttons, .difficulty-buttons, .team-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.ai-options, .team-selection {
+    margin-top: 20px;
+}
+
+h2, h3 {
+    color: #333;
+    margin-bottom: 15px;
 }
 
 @keyframes slideDown {
