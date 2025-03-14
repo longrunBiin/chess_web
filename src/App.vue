@@ -3,6 +3,9 @@
         <h1>체스 게임</h1>
         <div v-if="gameStatus === 'playing'" class="game-info">
             <div class="current-turn">현재 턴: {{ currentTurn }}</div>
+            <div v-if="isAIThinking" class="ai-thinking">
+                <div class="thinking-dots"></div>
+            </div>
         </div>
         <div v-if="gameStatus !== 'idle'" class="board-container">
             <div class="rank-labels">
@@ -126,6 +129,7 @@ export default {
         const selectedDifficulty = ref(null)
         const selectedTeam = ref(null)
         const isAIMode = ref(false)
+        const isAIThinking = ref(false)
 
         const API_URL = import.meta.env.VITE_API_URL
 
@@ -218,7 +222,14 @@ export default {
             }
         }
 
-        const requestAIMove = async () => {
+        const requestAIMove = async (retryCount = 0) => {
+            const MAX_RETRIES = 3
+            isAIThinking.value = true
+            showNotification('AI가 수를 고민하고 있습니다...', 'info')
+            
+            // 2초 지연
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            
             try {
                 const response = await axios.post(`${API_URL}/api/move/ai`)
                 
@@ -232,6 +243,16 @@ export default {
                     const startRow = 8 - parseInt(startPos[1])
                     const endCol = endPos.charCodeAt(0) - 97
                     const endRow = 8 - parseInt(endPos[1])
+                    
+                    // 기물 이동이 유효한지 확인
+                    if (startPos === endPos || !board.value[startRow][startCol]) {
+                        if (retryCount < MAX_RETRIES) {
+                            isAIThinking.value = false
+                            return requestAIMove(retryCount + 1)
+                        } else {
+                            throw new Error('AI가 유효한 움직임을 찾지 못했습니다.')
+                        }
+                    }
                     
                     // 기물 이동
                     const movingPiece = board.value[startRow][startCol]
@@ -260,11 +281,25 @@ export default {
                         }
                     }
                 } else {
-                    showNotification(response.data.message)
+                    // 실패한 경우 재시도
+                    if (retryCount < MAX_RETRIES) {
+                        isAIThinking.value = false
+                        return requestAIMove(retryCount + 1)
+                    } else {
+                        showNotification('AI가 유효한 움직임을 찾지 못했습니다.')
+                    }
                 }
             } catch (error) {
-                showNotification('AI 수 요청 중 오류가 발생했습니다.')
-                console.error('Error:', error)
+                // 에러 발생 시 재시도
+                if (retryCount < MAX_RETRIES) {
+                    isAIThinking.value = false
+                    return requestAIMove(retryCount + 1)
+                } else {
+                    showNotification('AI 수 요청 중 오류가 발생했습니다.')
+                    console.error('Error:', error)
+                }
+            } finally {
+                isAIThinking.value = false
             }
         }
 
@@ -397,6 +432,7 @@ export default {
             selectedDifficulty,
             selectedTeam,
             isAIMode,
+            isAIThinking,
             startSoloGame,
             startAIGame,
             selectDifficulty,
@@ -539,6 +575,11 @@ button:disabled {
     color: white;
 }
 
+.notification.info {
+    background-color: #2196F3;
+    color: white;
+}
+
 .game-result {
     position: fixed;
     top: 50%;
@@ -669,6 +710,44 @@ h2, h3 {
     }
     to {
         opacity: 0;
+    }
+}
+
+.ai-thinking {
+    margin-top: 10px;
+}
+
+.thinking-dots {
+    display: inline-block;
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.thinking-dots:after {
+    content: " ";
+    display: block;
+    border-radius: 50%;
+    width: 0;
+    height: 0;
+    margin: 8px;
+    box-sizing: border-box;
+    border: 24px solid #2196F3;
+    border-color: #2196F3 transparent #2196F3 transparent;
+    animation: thinking-dots 1.2s infinite;
+}
+
+@keyframes thinking-dots {
+    0% {
+        transform: rotate(0);
+        animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    }
+    50% {
+        transform: rotate(900deg);
+        animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    100% {
+        transform: rotate(1800deg);
     }
 }
 </style> 
