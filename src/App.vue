@@ -188,7 +188,10 @@ export default {
         const startGame = async (difficulty) => {
             clearGameState()
             try {
-                const response = await axios.get(`${API_URL}/api/start/${difficulty}`, {
+                const response = await axios.get(`${API_URL}/api/start`, {
+                    params: {
+                        difficulty: difficulty
+                    },
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache',
