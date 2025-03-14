@@ -224,8 +224,20 @@ export default {
                 
                 if (response.data.isSuccess) {
                     const { result } = response.data
-                    const parsedBoard = parseBoard(result.board)
-                    board.value = parsedBoard
+                    const startPos = result.startPos
+                    const endPos = result.endPos
+                    
+                    // 시작 위치와 도착 위치를 좌표로 변환
+                    const startCol = startPos.charCodeAt(0) - 97
+                    const startRow = 8 - parseInt(startPos[1])
+                    const endCol = endPos.charCodeAt(0) - 97
+                    const endRow = 8 - parseInt(endPos[1])
+                    
+                    // 기물 이동
+                    const movingPiece = board.value[startRow][startCol]
+                    board.value[startRow][startCol] = ''
+                    board.value[endRow][endCol] = movingPiece
+                    
                     currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white'
                     showNotification(response.data.message, 'success')
 
@@ -247,6 +259,8 @@ export default {
                             }
                         }
                     }
+                } else {
+                    showNotification(response.data.message)
                 }
             } catch (error) {
                 showNotification('AI 수 요청 중 오류가 발생했습니다.')
