@@ -201,7 +201,7 @@ export default {
                 const response = await axios.get(`${API_URL}/api/start`, {
                     params: {
                         difficulty: difficulty,
-                        playerColor: playerColor,
+                        color: playerColor,
                         aiColor: aiColor
                     },
                     headers: {
