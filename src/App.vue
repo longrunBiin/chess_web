@@ -19,8 +19,7 @@
                              :class="{
                                  'white': (rowIndex + colIndex) % 2 === 0,
                                  'black': (rowIndex + colIndex) % 2 === 1,
-                                 'selected': isSelected(rowIndex, colIndex),
-                                 'valid-move': isValidMove(rowIndex, colIndex)
+                                 'selected': isSelected(rowIndex, colIndex)
                              }"
                              @click="handleCellClick(rowIndex, colIndex)">
                             <div class="piece" v-if="piece">{{ piece }}</div>
@@ -221,15 +220,33 @@ export default {
 
         const requestAIMove = async () => {
             try {
-                const response = await axios.post(`${API_URL}/api/move/ai`, {
-                    difficulty: selectedDifficulty.value
-                })
+                const response = await axios.post(`${API_URL}/api/move/ai`)
                 
                 if (response.data.isSuccess) {
                     const { result } = response.data
-                    updateBoard(result.board)
+                    const parsedBoard = parseBoard(result.board)
+                    board.value = parsedBoard
                     currentTurn.value = currentTurn.value === 'white' ? 'black' : 'white'
-                    showNotification('AI가 수를 두었습니다.', 'success')
+                    showNotification(response.data.message, 'success')
+
+                    // AI가 킹을 잡은 경우 게임 종료 처리
+                    if (response.data.message.includes('킹을 잡았습니다')) {
+                        gameStatus.value = 'finished'
+                        
+                        const color = result.movePiece.white ? 'white' : 'black'
+                        const resultResponse = await axios.get(`${API_URL}/api/result?color=${color}`)
+                        
+                        if (resultResponse.data.isSuccess) {
+                            const { result: gameResultData } = resultResponse.data
+                            gameResult.value = {
+                                winner: gameResultData.winnerColor === 'WHITE' ? '흰색' : '검은색',
+                                winnerPieces: gameResultData.whiteScore,
+                                loserPieces: gameResultData.loserScore,
+                                winnerPiecesList: gameResultData.winnerPieces,
+                                loserPiecesList: gameResultData.loserPieces
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 showNotification('AI 수 요청 중 오류가 발생했습니다.')
@@ -456,14 +473,6 @@ h1 {
 
 .selected {
     background-color: #baca44;
-}
-
-.valid-move::after {
-    content: '';
-    width: 20px;
-    height: 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
 }
 
 .piece {
