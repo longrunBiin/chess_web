@@ -168,7 +168,7 @@ export default {
 
         const startSoloGame = () => {
             isAIMode.value = false
-            startGame('none')
+            showTeamSelection.value = true
         }
 
         const startAIGame = () => {
@@ -185,15 +185,24 @@ export default {
         const selectTeam = (team) => {
             selectedTeam.value = team
             showTeamSelection.value = false
-            startGame(selectedDifficulty.value)
+            if (isAIMode.value) {
+                // AI 모드일 경우 플레이어의 반대 색상을 AI 색상으로 설정
+                const aiColor = team === 'white' ? 'black' : 'white'
+                startGame(selectedDifficulty.value, team, aiColor)
+            } else {
+                // 혼자하기 모드일 경우
+                startGame('none', team)
+            }
         }
 
-        const startGame = async (difficulty) => {
+        const startGame = async (difficulty, playerColor, aiColor = null) => {
             clearGameState()
             try {
                 const response = await axios.get(`${API_URL}/api/start`, {
                     params: {
-                        difficulty: difficulty
+                        difficulty: difficulty,
+                        playerColor: playerColor,
+                        aiColor: aiColor
                     },
                     headers: {
                         'Cache-Control': 'no-cache',
